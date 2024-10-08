@@ -12,9 +12,23 @@ jobs:
       - name: Start JMeter Slave Containers
         run: |
           # Start three JMeter slave containers without requiring SSL
-          docker run -d --name jmeter-slave1 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=localhost -Jserver.port=1099 -Jclient.rmi.localport=40000 -Djavax.net.ssl.trustStore="" -Djavax.net.ssl.trustStorePassword=""
-          docker run -d --name jmeter-slave2 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=localhost -Jserver.port=1099 -Jclient.rmi.localport=40001 -Djavax.net.ssl.trustStore="" -Djavax.net.ssl.trustStorePassword=""
-          docker run -d --name jmeter-slave3 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=localhost -Jserver.port=1099 -Jclient.rmi.localport=40002 -Djavax.net.ssl.trustStore="" -Djavax.net.ssl.trustStorePassword=""
+          docker run -d --name jmeter-slave1 --network host justb4/jmeter:5.5 \
+            -Djava.rmi.server.hostname=localhost \
+            -Jserver.port=1099 \
+            -Jclient.rmi.localport=40000 \
+            -Djava.rmi.server.useLocalHostname=false
+          
+          docker run -d --name jmeter-slave2 --network host justb4/jmeter:5.5 \
+            -Djava.rmi.server.hostname=localhost \
+            -Jserver.port=1099 \
+            -Jclient.rmi.localport=40001 \
+            -Djava.rmi.server.useLocalHostname=false
+          
+          docker run -d --name jmeter-slave3 --network host justb4/jmeter:5.5 \
+            -Djava.rmi.server.hostname=localhost \
+            -Jserver.port=1099 \
+            -Jclient.rmi.localport=40002 \
+            -Djava.rmi.server.useLocalHostname=false
 
       - name: Wait for Slaves to Start
         run: |
@@ -24,7 +38,9 @@ jobs:
       - name: Build and run JMeter Master Container
         run: |
           # Run the JMeter master to execute the test
-          docker run --rm -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 -n -t /tests/tests/S01_SimpleExample.jmx -l /tests/results.jtl -R localhost,localhost,localhost
+          docker run --rm -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 \
+            -n -t /tests/tests/S01_SimpleExample.jmx -l /tests/results.jtl \
+            -R localhost,localhost,localhost
 
       - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
