@@ -14,21 +14,28 @@ jobs:
         run: |
           docker network create jmeter-network
 
+      - name: Generate rmi_keystore.jks
+        run: |
+          # You may need to adjust the following command to generate a valid keystore
+          keytool -genkeypair -alias jmeter -keyalg RSA -keystore rmi_keystore.jks -keysize 2048 -dname "CN=localhost, OU=MyOrganization, O=MyCompany, L=City, S=State, C=Country" -storepass password -keypass password -noprompt
+          
       - name: Start JMeter Slave Nodes
         run: |
-          # Start three JMeter slave nodes in detached mode
-          docker run -d --name jmeter-slave1 --network jmeter-network justb4/jmeter:5.5 -s
-          docker run -d --name jmeter-slave2 --network jmeter-network justb4/jmeter:5.5 -s
-          docker run -d --name jmeter-slave3 --network jmeter-network justb4/jmeter:5.5 -s
+          # Start three JMeter slave nodes in detached mode with the keystore
+          for i in {1..3}; do
+            docker run -d --name jmeter-slave$i --network jmeter-network -v "${{ github.workspace }}/rmi_keystore.jks:/bin/rmi_keystore.jks" justb4/jmeter:5.5 -s -Jserver.rmi.ssl.keystore.file=/bin/rmi_keystore.jks -Jserver.rmi.ssl.keystore.pass=password
+          done
 
       - name: Start JMeter Master Node
         run: |
-          # Start JMeter master node and connect to the slave nodes
-          docker run --rm --name jmeter-master --network jmeter-network -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 \
+          # Start JMeter master node and connect to the slave nodes with the keystore
+          docker run --rm --name jmeter-master --network jmeter-network -v "${{ github.workspace }}:/tests" -v "${{ github.workspace }}/rmi_keystore.jks:/bin/rmi_keystore.jks" justb4/jmeter:5.5 \
             -n -t /tests/tests/S01_SimpleExample.jmx \
             -l /tests/results.jtl \
             -R jmeter-slave1,jmeter-slave2,jmeter-slave3 \
-            -e -o /tests/html_report
+            -e -o /tests/html_report \
+            -Jserver.rmi.ssl.keystore.file=/bin/rmi_keystore.jks \
+            -Jserver.rmi.ssl.keystore.pass=password
 
       - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
