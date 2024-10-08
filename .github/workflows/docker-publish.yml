@@ -1,0 +1,21 @@
+on: [push]
+jobs:
+  JmeterDockerRun:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build and run JMeter Docker container
+        run: |
+          docker run --rm -v "$(pwd):/tests" justb4/jmeter:5.5 -n -t /tests/tests/your_test.jmx -l /tests/results.jtl
+          
+      - name: Upload JMeter results
+        uses: actions/upload-artifact@v2
+        with:
+          name: jmeter-results
+          path: results.jtl
