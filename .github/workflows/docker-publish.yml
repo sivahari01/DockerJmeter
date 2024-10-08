@@ -2,10 +2,6 @@ on: [push]
 jobs:
   JmeterDockerRun:
     runs-on: ubuntu-latest
-
-  jmeter:
-    runs-on: ubuntu-latest
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v3  # Update to the latest version
