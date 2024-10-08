@@ -3,16 +3,7 @@
     <hashTree>
         <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
             <stringProp name="TestPlan.comments"></stringProp>
-            <boolProp name="TestPlan.enable">${__P(testPlan.enable, false)}</boolProp>
-            <elementProp name="TestPlan.user_defined" elementType="UserDefinedVariables" guiclass="UserDefinedVariablesGui" testclass="UserDefinedVariables" testname="User Defined Variables" enabled="true">
-                <collectionProp name="UserDefinedVariables.user_defined">
-                    <elementProp name="URL" elementType="Argument">
-                        <stringProp name="Argument.name">URL</stringProp>
-                        <stringProp name="Argument.value">http://example.com</stringProp>
-                    </elementProp>
-                </collectionProp>
-            </elementProp>
-            <stringProp name="TestPlan.userDefinedVariables"></stringProp>
+            <boolProp name="TestPlan.enable">true</boolProp>
         </TestPlan>
         <hashTree>
             <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group" enabled="true">
@@ -20,18 +11,11 @@
                 <stringProp name="ThreadGroup.ramp_time">1</stringProp>
                 <longProp name="ThreadGroup.duration"></longProp>
                 <longProp name="ThreadGroup.delay"></longProp>
-                <elementProp name="ThreadGroup.scheduler" elementType="SchedulerConfig">
-                    <boolProp name="ThreadGroup.scheduler">false</boolProp>
-                    <stringProp name="ThreadGroup.start_time"></stringProp>
-                    <stringProp name="ThreadGroup.end_time"></stringProp>
-                    <stringProp name="ThreadGroup.duration"></stringProp>
-                    <stringProp name="ThreadGroup.delay"></stringProp>
-                </elementProp>
             </ThreadGroup>
             <hashTree>
                 <HttpSampler guiclass="HttpTestSampleGui" testclass="HttpTestSample" testname="HTTP Request" enabled="true">
                     <stringProp name="HTTPSampler.protocol">http</stringProp>
-                    <stringProp name="HTTPSampler.domain">${URL}</stringProp>
+                    <stringProp name="HTTPSampler.domain">example.com</stringProp>
                     <stringProp name="HTTPSampler.port">80</stringProp>
                     <stringProp name="HTTPSampler.path">/</stringProp>
                     <stringProp name="HTTPSampler.method">GET</stringProp>
