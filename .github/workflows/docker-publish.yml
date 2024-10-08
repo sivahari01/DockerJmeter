@@ -1,4 +1,5 @@
 on: [push]
+
 jobs:
   JmeterDockerRun:
     runs-on: ubuntu-latest
@@ -9,15 +10,27 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and run JMeter Docker container
+      - name: Create Docker Network
         run: |
-          # Run JMeter in non-GUI mode and generate results
-          docker run --rm -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 \
+          docker network create jmeter-network
+
+      - name: Start JMeter Slave Nodes
+        run: |
+          # Start three JMeter slave nodes in detached mode
+          docker run -d --name jmeter-slave1 --network jmeter-network justb4/jmeter:5.5 -s
+          docker run -d --name jmeter-slave2 --network jmeter-network justb4/jmeter:5.5 -s
+          docker run -d --name jmeter-slave3 --network jmeter-network justb4/jmeter:5.5 -s
+
+      - name: Start JMeter Master Node
+        run: |
+          # Start JMeter master node and connect to the slave nodes
+          docker run --rm --name jmeter-master --network jmeter-network -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 \
             -n -t /tests/tests/S01_SimpleExample.jmx \
             -l /tests/results.jtl \
+            -R jmeter-slave1,jmeter-slave2,jmeter-slave3 \
             -e -o /tests/html_report
 
-      - name: Upload JMeter results
+      - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
         with:
           name: jmeter-results
@@ -28,3 +41,9 @@ jobs:
         with:
           name: jmeter-html-report
           path: html_report
+
+      - name: Clean up Docker containers
+        run: |
+          docker stop jmeter-slave1 jmeter-slave2 jmeter-slave3 jmeter-master
+          docker rm jmeter-slave1 jmeter-slave2 jmeter-slave3 jmeter-master
+          docker network rm jmeter-network
