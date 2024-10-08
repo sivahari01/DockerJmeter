@@ -1,8 +1,8 @@
-# JMeter Docker GitHub Actions Example
+# JMeter Docker RUN
 
 This repository demonstrates how to run JMeter tests in a Docker container using GitHub Actions.
 
-## Directory Structure
+## File
 
 - `Dockerfile`: Contains the instructions to build the JMeter Docker image.
 - `tests/your_test.jmx`: JMeter test script.
@@ -19,3 +19,5 @@ This repository demonstrates how to run JMeter tests in a Docker container using
 ## Results
 
 JMeter test results will be saved as artifacts in the GitHub Actions logs.
+
+#sivahari
