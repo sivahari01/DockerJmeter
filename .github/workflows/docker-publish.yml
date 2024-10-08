@@ -10,12 +10,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Generate RMI Keystore
+        run: |
+          # Create a keystore for RMI if it doesn't exist
+          keytool -genkey -alias jmeter -keyalg RSA -keystore /tmp/rmi_keystore.jks -storepass password -keypass password -dname "CN=localhost, OU=Testing, O=MyCompany, L=MyCity, S=MyState, C=MyCountry" -validity 3650
+
       - name: Start JMeter Slave Containers
         run: |
           # Start three JMeter slave containers
-          docker run -d --name jmeter-slave1 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=127.0.0.1 -Jserver.port=1099 -Jclient.rmi.localport=40000
-          docker run -d --name jmeter-slave2 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=127.0.0.1 -Jserver.port=1099 -Jclient.rmi.localport=40001
-          docker run -d --name jmeter-slave3 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=127.0.0.1 -Jserver.port=1099 -Jclient.rmi.localport=40002
+          docker run -d --name jmeter-slave1 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=host.docker.internal -Jserver.port=1099 -Jclient.rmi.localport=40000 -Djavax.net.ssl.keyStore=/tmp/rmi_keystore.jks -Djavax.net.ssl.keyStorePassword=password
+          docker run -d --name jmeter-slave2 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=host.docker.internal -Jserver.port=1099 -Jclient.rmi.localport=40001 -Djavax.net.ssl.keyStore=/tmp/rmi_keystore.jks -Djavax.net.ssl.keyStorePassword=password
+          docker run -d --name jmeter-slave3 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=host.docker.internal -Jserver.port=1099 -Jclient.rmi.localport=40002 -Djavax.net.ssl.keyStore=/tmp/rmi_keystore.jks -Djavax.net.ssl.keyStorePassword=password
 
       - name: List the contents of the /tests directory
         run: |
@@ -25,7 +30,7 @@ jobs:
       - name: Build and run JMeter Master Container
         run: |
           # Run the JMeter master to execute the test
-          docker run --rm -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 -n -t /tests/tests/S01_SimpleExample.jmx -l /tests/results.jtl -R 127.0.0.1,127.0.0.1,127.0.0.1
+          docker run --rm -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 -n -t /tests/tests/S01_SimpleExample.jmx -l /tests/results.jtl -R host.docker.internal,host.docker.internal,host.docker.internal -Djavax.net.ssl.keyStore=/tmp/rmi_keystore.jks -Djavax.net.ssl.keyStorePassword=password
 
       - name: Generate HTML Report
         run: |
