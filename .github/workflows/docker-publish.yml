@@ -11,23 +11,23 @@ jobs:
 
       - name: Start JMeter Slave Containers
         run: |
-          # Start three JMeter slave containers without requiring SSL
-          docker run -d --name jmeter-slave1 --network host justb4/jmeter:5.5 \
-            -Djava.rmi.server.hostname=127.0.0.1 \
+          # Start three JMeter slave containers
+          docker run -d --name jmeter-slave1 justb4/jmeter:5.5 \
+            -Djava.rmi.server.hostname=jmeter-slave1 \
             -Jserver.port=1099 \
             -Jclient.rmi.localport=40000 \
             -Djava.rmi.server.useLocalHostname=false \
             -Djava.rmi.server.ssl=false
           
-          docker run -d --name jmeter-slave2 --network host justb4/jmeter:5.5 \
-            -Djava.rmi.server.hostname=127.0.0.1 \
+          docker run -d --name jmeter-slave2 justb4/jmeter:5.5 \
+            -Djava.rmi.server.hostname=jmeter-slave2 \
             -Jserver.port=1099 \
             -Jclient.rmi.localport=40001 \
             -Djava.rmi.server.useLocalHostname=false \
             -Djava.rmi.server.ssl=false
           
-          docker run -d --name jmeter-slave3 --network host justb4/jmeter:5.5 \
-            -Djava.rmi.server.hostname=127.0.0.1 \
+          docker run -d --name jmeter-slave3 justb4/jmeter:5.5 \
+            -Djava.rmi.server.hostname=jmeter-slave3 \
             -Jserver.port=1099 \
             -Jclient.rmi.localport=40002 \
             -Djava.rmi.server.useLocalHostname=false \
@@ -40,10 +40,10 @@ jobs:
 
       - name: Build and run JMeter Master Container
         run: |
-          # Run the JMeter master to execute the test using container IPs
+          # Run the JMeter master to execute the test using the container names
           docker run --rm -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 \
             -n -t /tests/tests/S01_SimpleExample.jmx -l /tests/results.jtl \
-            -R 127.0.0.1,127.0.0.1,127.0.0.1
+            -R jmeter-slave1,jmeter-slave2,jmeter-slave3
 
       - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
