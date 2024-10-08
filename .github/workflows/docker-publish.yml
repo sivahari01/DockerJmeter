@@ -11,7 +11,7 @@ jobs:
 
       - name: Build and run JMeter Docker container
         run: |
-          docker run --rm -v "$(pwd):/tests" justb4/jmeter:5.5 -n -t /tests/tests/your_test.jmx -l /tests/results.jtl
+          docker run --rm -v "$(pwd):/tests" justb4/jmeter:5.5 -n -t /tests/S01_SimpleExample.jmx -l /tests/results.jtl
           
       - name: Upload JMeter results
         uses: actions/upload-artifact@v3  # Update to the latest version
