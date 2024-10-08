@@ -2,19 +2,38 @@ on: [push]
 jobs:
   JmeterDockerRun:
     runs-on: ubuntu-latest
-    steps:
+     steps:
       - name: Check out repository
         uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and run JMeter Docker container
+      - name: Start JMeter Slave Containers
         run: |
-          docker run --rm -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 -n -t /tests/tests/S01_SimpleExample.jmx -l /tests/results.jtl
-          
-      - name: Upload JMeter results
+          # Start three JMeter slave containers
+          docker run -d --name jmeter-slave1 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=127.0.0.1 -Jserver.port=1099 -Jclient.rmi.localport=40000
+          docker run -d --name jmeter-slave2 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=127.0.0.1 -Jserver.port=1099 -Jclient.rmi.localport=40001
+          docker run -d --name jmeter-slave3 --network host justb4/jmeter:5.5 -Djava.rmi.server.hostname=127.0.0.1 -Jserver.port=1099 -Jclient.rmi.localport=40002
+
+      - name: Build and run JMeter Master Container
+        run: |
+          # Run the JMeter master to execute the test
+          docker run --rm --network host -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 -n -t /tests/S01_SimpleExample.jmx -l /tests/results.jtl -R 127.0.0.1,127.0.0.1,127.0.0.1
+
+      - name: Generate HTML Report
+        run: |
+          # Generate the HTML report from JTL results
+          docker run --rm -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 -g /tests/results.jtl -o /tests/report
+
+      - name: Upload JMeter Results
         uses: actions/upload-artifact@v3
         with:
           name: jmeter-results
           path: results.jtl
+
+      - name: Upload JMeter HTML Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: jmeter-html-report
+          path: report
