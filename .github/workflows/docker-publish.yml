@@ -1,5 +1,4 @@
 on: [push]
-
 jobs:
   JmeterDockerRun:
     runs-on: ubuntu-latest
@@ -10,31 +9,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Create Docker Network
+      - name: Build and run JMeter Docker container
         run: |
-          docker network create jmeter-network
-
-      - name: Generate rmi_keystore.jks
-        run: |
-          keytool -genkeypair -alias jmeter -keyalg RSA -keystore rmi_keystore.jks -keysize 2048 -dname "CN=localhost, OU=MyOrganization, O=MyCompany, L=City, S=State, C=Country" -storepass password -keypass password -noprompt
-
-      - name: Start JMeter Slave Nodes
-        run: |
-          for i in {1..3}; do
-            docker run -d --name jmeter-slave$i --network jmeter-network -v "${{ github.workspace }}/rmi_keystore.jks:/opt/apache-jmeter/bin/rmi_keystore.jks" justb4/jmeter:5.5 -s -Jserver.rmi.ssl.keystore.file=/opt/apache-jmeter/bin/rmi_keystore.jks -Jserver.rmi.ssl.keystore.pass=password
-          done
-
-      - name: Start JMeter Master Node
-        run: |
-          docker run --rm --name jmeter-master --network jmeter-network -v "${{ github.workspace }}:/tests" -v "${{ github.workspace }}/rmi_keystore.jks:/opt/apache-jmeter/bin/rmi_keystore.jks" justb4/jmeter:5.5 \
+          # Run JMeter in non-GUI mode and generate results
+          docker run --rm -v "${{ github.workspace }}:/tests" justb4/jmeter:5.5 \
             -n -t /tests/tests/S01_SimpleExample.jmx \
             -l /tests/results.jtl \
-            -R jmeter-slave1,jmeter-slave2,jmeter-slave3 \
-            -e -o /tests/html_report \
-            -Jserver.rmi.ssl.keystore.file=/opt/apache-jmeter/bin/rmi_keystore.jks \
-            -Jserver.rmi.ssl.keystore.pass=password
+            -e -o /tests/html_report
 
-      - name: Upload JMeter Results
+      - name: Upload JMeter results
         uses: actions/upload-artifact@v3
         with:
           name: jmeter-results
@@ -45,9 +28,3 @@ jobs:
         with:
           name: jmeter-html-report
           path: html_report
-
-      - name: Clean up Docker containers
-        run: |
-          docker stop jmeter-slave1 jmeter-slave2 jmeter-slave3 jmeter-master
-          docker rm jmeter-slave1 jmeter-slave2 jmeter-slave3 jmeter-master
-          docker network rm jmeter-network
